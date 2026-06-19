@@ -1,6 +1,6 @@
-[submodule "amm-contract/lib/forge-std"]
-	path = amm-contract/lib/forge-std
+[submodule "amm-contract-v2/lib/forge-std"]
+	path = amm-contract-v2/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "amm-contract/lib/openzeppelin-contracts"]
-	path = amm-contract/lib/openzeppelin-contracts
+[submodule "amm-contract-v2/lib/openzeppelin-contracts"]
+	path = amm-contract-v2/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
