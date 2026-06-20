@@ -79,7 +79,7 @@ contract AMMVault is ERC4626, ReentrancyGuard {
     }
 
     //function by which user withdraws USDC
-    function withdraw(uint256 assets, uint256 receiver, uint256 owner) public override nonReentrant returns(uint256 shares) {
+    function withdraw(uint256 assets, address receiver, address owner) public override nonReentrant returns(uint256 shares) {
         shares = previewWithdraw(assets);  //amount of shares getting burned to get amountOUT
         
         if(msg.sender != owner) {
@@ -113,9 +113,124 @@ contract AMMVault is ERC4626, ReentrancyGuard {
         
         //swap USDC for WETH
         uint256 token0Out = amm.swap(address(token1), usdcToSwap);
-        
+
+        //checking weather slippage is within the acceptable range
+        require(token0Out >= minToken0Out, "Slippage too high");
+
+        uint256 token1Remaining = usdcAmount - usdcToSwap;
+        shares = amm.addLiquidity(token0Out, token1Remaining);
+
+        return shares;
     }
 
     //remove lp token, gets weth and usdc both and then swap weth back to usdc
-    function removeLiquidityFromAMM() {}
+    function removeLiquidityFromAMM(uint256 assets, address receiver) internal {
+        (, , uint256 currReserve0, uint256 currReserve1, , , , ) = amm.getPoolState();
+        require(currReserve0 > 0 && currReserve1 > 0, "Pool is unbalanced or drained, cannot remove liquidity proportionally.");
+
+        uint256 totalAssetStored = totalAssets();
+        uint256 lpBalance = lpToken.balanceOf(address(this));
+        require(totalAssetStored > 0 && lpBalance > 0, "Vault is empty or has no LP tokens");
+
+        // calculate how many LP tokens to remove based on the assets requested and the total assets in the vault
+        // totalAssetsStored - 1 for round up, else it will round down use to integer division and give less assets than requested
+        uint256 lpTokenBurn = (assets * lpBalance + (totalAssetStored - 1)) / totalAssetStored;
+        
+        //remove liquidity from the AMM, returns the amount of WETH and USDC removed
+        (uint256 amount0, uint256 amount1) = amm.removeLiquidity(lpTokenBurn);
+        if(amount0 > 0) {
+            //get the min expected amount of USDC to be swapped for WETH with 1% slippage
+            uint256 minToken1Out = (amm.getSwapEstimate(address(this), amount0) * (1000 - slippageBps)) / 10000;
+
+            //swap weth for usdc
+            uint256 token1Out = amm.swap(address(token0), amount0);
+
+            //checking weather slippage is within the acceptable range
+            require(token1Out >= minToken1Out, "Slippage too high");
+
+            //add the swapped USDC to the amount of USDC removed from the AMM
+            amount1 += token1Out;
+        }
+
+        // enforce ERC-4626 exactness: transfer exactly `assets` or revert
+        require(amount1 >= assets, "Vault: Insufficient out");
+
+        token1.safeTransfer(receiver, assets);
+
+        // any surplus (amt1 - assets) remains in the vault and accrues to remaining depositors
+    }
+
+    //---------- ADDITIONAL FUNCTIONS FOR BETTER ERC4626 COMPLIANCE ----------
+
+    function redeem(uint256 shares, address receiver, address owner) public override nonReentrant returns (uint256 assets) {
+        if (msg.sender != owner) {
+            _spendAllowance(owner, msg.sender, shares);
+        }
+        
+        assets = previewRedeem(shares);
+        _burn(owner, shares);
+        removeLiquidityFromAMM(assets, receiver);(assets, receiver);
+        
+        emit Withdraw(msg.sender, receiver, owner, assets, shares);
+        return assets;
+    }
+
+    function mint(uint256 shares, address receiver) public override nonReentrant returns (uint256 assets) {
+        assets = previewMint(shares);
+        
+        IERC20(asset()).safeTransferFrom(msg.sender, address(this), assets);
+        addLiquidityToAMM(assets);
+        _mint(receiver, shares);
+        
+        emit Deposit(msg.sender, receiver, assets, shares);
+        return assets;
+    }
+
+    //---------- GETTERS (helpers) ----------
+
+    function getAMM() external view returns (address) {
+        return address(amm);
+    }
+
+    function getLPTokenBalance() external view returns(uint256){
+        return lpToken.balanceOf(address(this));
+    }
+
+    function getTotalShares() external view returns(uint256){
+       return totalSupply();// from the ERC20 vUSDC contract
+    }
+
+    function getUserShares(address user) external view returns (uint256) {
+        return balanceOf(user);
+    }
+
+    function getUserAssetBalance(address user) external view returns (uint256) {
+        return convertToAssets(balanceOf(user)); //convertToAssets is from ERC4626 and returns the amount of assets (USDC) for a given amount of shares
+    }
+
+    function getTotalAssetsManaged() external view returns (uint256) {
+        return totalAssets();
+    }
+
+    // Current exchange rate: how many assets per 1 vUSDC share
+    function getPricePerShare() external view returns (uint256) {
+        uint256 supply = totalSupply();
+        return supply == 0 ? 0 : (totalAssets() * 1e18) / supply;
+    }
+
+    function getLPToken() external view returns (address) {
+        return address(lpToken);
+    }
+
+    function getToken0() external view returns (address) {
+        return address(token0);
+    }
+
+    function getToken1() external view returns (address) {
+        return address(token1);
+    }
+
+    function getSlippageBps() external view returns (uint256) {
+        return slippageBps;
+    }
 }
