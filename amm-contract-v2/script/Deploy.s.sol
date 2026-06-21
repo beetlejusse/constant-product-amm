@@ -6,12 +6,11 @@ import "../src/AMM.sol";
 import "./HelperConfig.s.sol";
 
 contract DeployConstantProductAMM is Script {
-
-    function run() external returns(ConstantProductAMM, HelperConfig) {
+    function run() external returns (ConstantProductAMM, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
         HelperConfig.NetworkConfig memory config = helperConfig.getConfig();
 
-        vm.startBroadcast();
+        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
 
         ConstantProductAMM amm = new ConstantProductAMM(config.token0, config.token1);
         vm.stopBroadcast();
