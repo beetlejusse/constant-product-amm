@@ -25,14 +25,11 @@ contract AMMTest is Test {
         amm = new ConstantProductAMM(config.token0, config.token1);
         mockPoolToken = amm.poolToken();
 
-        mockWETH.mint(testUser, 10000 * 10**18);
+        mockWETH.mint(testUser, 10000 * 10 ** 18);
         mockUSDC.mint(testUser, 10000 * 10 ** 6);
     }
 
-    function addLiquidity()
-        public
-        returns (uint256 shares, uint256 amount0, uint256 amount1)
-    {
+    function addLiquidity() public returns (uint256 shares, uint256 amount0, uint256 amount1) {
         amount0 = 10 * 1e18;
         amount1 = 10 * 10 ** 6;
 
@@ -43,11 +40,10 @@ contract AMMTest is Test {
         shares = amm.addLiquidityToPool(amount0, amount1);
 
         vm.stopPrank();
-
     }
 
     function testAddLiquiditySuccess() public {
-        (uint256 shares, , ) = addLiquidity();
+        (uint256 shares,,) = addLiquidity();
 
         assertGt(shares, 0);
     }
@@ -61,11 +57,7 @@ contract AMMTest is Test {
     }
 
     function testRemoveLiquiditySuccess() public {
-        (
-            uint256 shares,
-            uint256 amount0Added,
-            uint256 amount1Added
-        ) = addLiquidity();
+        (uint256 shares, uint256 amount0Added, uint256 amount1Added) = addLiquidity();
 
         vm.startPrank(testUser);
         (uint256 amount0Removed, uint256 amount1Removed) = amm.removeLiquidityfromPool(shares);
@@ -79,7 +71,7 @@ contract AMMTest is Test {
         addLiquidity();
 
         //SETTING UP SWAP IN HERE, USER IS SWAPPING 10USDC
-        uint256 swapAmount = 10 * 10**18;
+        uint256 swapAmount = 10 * 10 ** 18;
         uint256 testuserUSDCbefore = mockUSDC.balanceOf(testUser);
 
         vm.startPrank(testUser);
@@ -93,7 +85,7 @@ contract AMMTest is Test {
         assertGt(amountOut, 0, "Amount out should be greater than 0");
         assertEq(userUSDCafterSwap, testuserUSDCbefore + amountOut, "User USDC balance should increase");
 
-        console.log("WETH Swapped:", swapAmount / 10**18);
-        console.log("USDC Received (after 0.3% fee and slippage):", amountOut / 10**6);
+        console.log("WETH Swapped:", swapAmount / 10 ** 18);
+        console.log("USDC Received (after 0.3% fee and slippage):", amountOut / 10 ** 6);
     }
 }
