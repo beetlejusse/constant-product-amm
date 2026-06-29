@@ -1,0 +1,21 @@
+import { cookieStorage, createStorage } from "wagmi";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { baseSepolia, type AppKitNetwork } from "@reown/appkit/networks";
+
+export const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? "";
+
+if (!projectId) {
+
+  console.warn("[wagmi] Missing NEXT_PUBLIC_REOWN_PROJECT_ID — wallet connection will not work.");
+}
+
+export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [baseSepolia];
+
+export const wagmiAdapter = new WagmiAdapter({
+  storage: createStorage({ storage: cookieStorage }),
+  ssr: true,
+  projectId,
+  networks,
+});
+
+export const wagmiConfig = wagmiAdapter.wagmiConfig;
