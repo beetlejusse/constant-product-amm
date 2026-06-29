@@ -6,7 +6,7 @@ contract LPToken {
     event Transfer(address indexed from, address indexed to, uint256 amount);
 
     string public name = "WETH-USDC TAC-LP";
-    string public symbol = "TAC-LP"; 
+    string public symbol = "TAC-LP";
     uint8 public decimals = 18;
 
     mapping(address => mapping(address => uint256)) public allowance;
@@ -24,20 +24,20 @@ contract LPToken {
         _;
     }
 
-    function approveAmount(address spender, uint256 amount) public returns(bool) {
+    function approveAmount(address spender, uint256 amount) public returns (bool) {
         allowance[msg.sender][spender] = amount;
         emit Approval(msg.sender, spender, amount);
         return true;
     }
 
-    function totalSupply () public view returns(uint256) {
+    function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
 
-    function transferFundFrom(address from, address to, uint256 amount) public returns(bool) {
+    function transferFundFrom(address from, address to, uint256 amount) public returns (bool) {
         require(balanceOf[from] >= amount, "Insufficient balance");
-        
-        if(from != msg.sender && allowance[from][msg.sender] != type(uint256).max) {
+
+        if (from != msg.sender && allowance[from][msg.sender] != type(uint256).max) {
             require(allowance[from][msg.sender] >= amount, "Insufficient allowance");
             allowance[from][msg.sender] -= amount;
         }
@@ -49,7 +49,7 @@ contract LPToken {
         return true;
     }
 
-    function transferToReceiver(address receiver, uint256 amount) public returns(bool) {
+    function transferToReceiver(address receiver, uint256 amount) public returns (bool) {
         return transferFundFrom(msg.sender, receiver, amount);
     }
 
