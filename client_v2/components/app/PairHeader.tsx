@@ -1,12 +1,20 @@
-import { TOKEN0, TOKEN1 } from "@/lib/contracts";
+import { TOKEN0, TOKEN1, type TokenInfo } from "@/lib/contracts";
 
-export function TokenPairIcon({ size = 44 }: { size?: number }) {
+export function TokenPairIcon({
+  size = 44,
+  token0 = TOKEN0,
+  token1 = TOKEN1,
+}: {
+  size?: number;
+  token0?: TokenInfo;
+  token1?: TokenInfo;
+}) {
   return (
     <div className="flex items-center">
 
       <img
-        src={TOKEN0.icon}
-        alt={TOKEN0.symbol}
+        src={token0.icon}
+        alt={token0.symbol}
         width={size}
         height={size}
         className="z-10 rounded-full bg-white object-contain ring-2 ring-background"
@@ -14,8 +22,8 @@ export function TokenPairIcon({ size = 44 }: { size?: number }) {
       />
 
       <img
-        src={TOKEN1.icon}
-        alt={TOKEN1.symbol}
+        src={token1.icon}
+        alt={token1.symbol}
         width={size}
         height={size}
         className="-ml-3 rounded-full bg-white object-contain ring-2 ring-background"

@@ -10,6 +10,7 @@ export function AppNav() {
   const links = [
     { name: "Home", href: "/" },
     { name: "Swap", href: "/swap", active: pathname === "/swap" },
+    { name: "Pools", href: "/pools", active: pathname === "/pools" },
     { name: "Liquidity", href: "/liquidity", active: pathname === "/liquidity" },
   ];
 

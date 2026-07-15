@@ -29,7 +29,7 @@ const CONTENT = {
       },
       {
         h: "Pool Balances",
-        p: "The balance bar visualises the current value split of the pool. Each swap moves reserves in opposite directions, nudging the ratio and the quoted price.",
+        p: "A constant product pool is always worth 50/50 by value — price is defined as y/x, so valuing x at that price always returns exactly y. Swaps move the reserves in opposite directions and shift the quoted price, but never that split.",
       },
       {
         h: "Liquidity Depth",
