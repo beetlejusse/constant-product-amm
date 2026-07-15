@@ -119,6 +119,23 @@ export const ammAbi = [
   { type: "error", name: "ReentrancyGuardReentrantCall", inputs: [] },
 ] as const;
 
+export const wethAbi = [
+  {
+    type: "function",
+    name: "deposit",
+    inputs: [],
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "withdraw",
+    inputs: [{ name: "wad", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
+
 export const erc20Abi = [
   {
     type: "function",
