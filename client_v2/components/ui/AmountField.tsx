@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { type TokenInfo } from "@/lib/contracts";
 import { fmtUnits } from "@/lib/format";
 
@@ -10,8 +13,91 @@ function sanitize(raw: string): string {
   return `${parts[0]}.${parts.slice(1).join("")}`;
 }
 
+function TokenIcon({ token, size = 18 }: { token: TokenInfo; size?: number }) {
+  return token.icon ? (
+
+    <img
+      src={token.icon}
+      alt={token.symbol}
+      width={size}
+      height={size}
+      className="rounded-full bg-white object-contain"
+      style={{ width: size, height: size }}
+    />
+  ) : (
+    <span className="size-2 rounded-full bg-brand" />
+  );
+}
+
+function TokenSelect({
+  token,
+  tokens,
+  onSelect,
+}: {
+  token: TokenInfo;
+  tokens: TokenInfo[];
+  onSelect: (t: TokenInfo) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-semibold transition-colors hover:border-foreground/30"
+      >
+        <TokenIcon token={token} />
+        {token.symbol}
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
+          size={14}
+          strokeWidth={2.2}
+          className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-md border border-border bg-card shadow-xl">
+          {tokens.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onSelect(t);
+              }}
+              className={`flex w-full cursor-pointer items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors hover:bg-foreground/5 ${
+                t.key === token.key ? "bg-foreground/5" : ""
+              }`}
+            >
+              <TokenIcon token={t} size={22} />
+              <span>
+                <span className="block font-semibold leading-tight">{t.symbol}</span>
+                <span className="block text-xs leading-tight text-muted-foreground">{t.name}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AmountField({
   token,
+  tokens,
+  onSelectToken,
   value,
   onChange,
   balance,
@@ -20,6 +106,8 @@ export function AmountField({
   readOnly = false,
 }: {
   token: TokenInfo;
+  tokens?: TokenInfo[];
+  onSelectToken?: (t: TokenInfo) => void;
   value: string;
   onChange?: (v: string) => void;
   balance?: bigint;
@@ -54,21 +142,14 @@ export function AmountField({
           onChange={(e) => onChange?.(sanitize(e.target.value))}
           className="tnum w-full min-w-0 bg-transparent text-2xl font-medium text-foreground outline-none placeholder:text-foreground/20 read-only:text-muted-foreground"
         />
-        <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-semibold">
-          {token.icon ? (
-
-            <img
-              src={token.icon}
-              alt={token.symbol}
-              width={18}
-              height={18}
-              className="size-[18px] rounded-full bg-white object-contain"
-            />
-          ) : (
-            <span className="size-2 rounded-full bg-brand" />
-          )}
-          {token.symbol}
-        </span>
+        {tokens && onSelectToken ? (
+          <TokenSelect token={token} tokens={tokens} onSelect={onSelectToken} />
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-semibold">
+            <TokenIcon token={token} />
+            {token.symbol}
+          </span>
+        )}
       </div>
     </div>
   );
